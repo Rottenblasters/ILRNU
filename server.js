@@ -1,7 +1,7 @@
 if (process.env.NODE_ENV !== "production") {
   require("dotenv").config();
 }
-
+// Exports
 const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
@@ -16,6 +16,7 @@ mongoose.connect(dbUrl, {
   useUnifiedTopology: true,
 });
 
+// connect to mongoDB
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
@@ -34,12 +35,14 @@ app.use(
 );
 app.use(cookieParser());
 
+// Routes
 const userRoutes = require("./routes/user");
 const adminRoutes = require("./routes/admin");
 
 app.use("/user", userRoutes);
 app.use("/admin", adminRoutes);
 
+// Route Error handler
 app.all("*", (req, res, next) => {
   res.status(404).send("Page Not Found!");
 });

@@ -6,9 +6,11 @@ const bcrypt = require("bcryptjs");
 const isEmail = require("validator/lib/isEmail");
 const authMiddleware = require("../middleware/authMiddleware");
 
+// Login an user
 router.get("/", async (req, res) => {
   const { email, password } = req.body;
 
+  // check if email is valid
   if (!isEmail(email)) return res.status(401).send("Invalid Email");
 
   try {
@@ -16,15 +18,18 @@ router.get("/", async (req, res) => {
       "+password"
     );
 
+    // check if user exists
     if (!user) {
       return res.status(401).send("Invalid Credentials");
     }
 
+    // verify password
     const isPassword = await bcrypt.compare(password, user.password);
     if (!isPassword) {
       return res.status(401).send("Invalid Credentials");
     }
 
+    // generate jwt token
     const payload = { userId: user._id };
     jwt.sign(
       payload,
@@ -42,9 +47,11 @@ router.get("/", async (req, res) => {
   }
 });
 
+// create new user
 router.post("/", async (req, res) => {
   const { email, password, name, phoneNo } = req.body;
 
+  // check if email is valid
   if (!isEmail(email)) return res.status(401).send("Invalid Email");
 
   try {
@@ -55,9 +62,13 @@ router.post("/", async (req, res) => {
       phoneNo: phoneNo,
       role: "user",
     });
+
+    // hash password
     user.password = await bcrypt.hash(password, 10);
+    // save user
     await user.save();
 
+    // generate jwt token
     const payload = { userId: user._id };
     jwt.sign(
       payload,
@@ -75,14 +86,18 @@ router.post("/", async (req, res) => {
   }
 });
 
+// edit an user
 router.put("/", authMiddleware, async (req, res) => {
   const { userId } = req.body;
   const user = await UserModel.findById(userId).select("+password");
   try {
+
+    //check if user exists
     if (!user) {
       res.status(500).send("User Not Found");
     }
 
+    // edit password
     const { oldPassword, newPassword } = req.body;
     const isPassword = await bcrypt.compare(oldPassword, user.password);
     if (!isPassword) {
@@ -98,13 +113,17 @@ router.put("/", authMiddleware, async (req, res) => {
   }
 });
 
+// delete an user
 router.delete("/", authMiddleware, async (req, res) => {
   const { userId } = req.body;
   const user = await UserModel.findById(userId);
   try {
+
+    // check if user exists
     if (!user) {
       res.status(500).send("User Not Found");
     }
+    // delete the user
     await UserModel.findByIdAndDelete(userId);
     res.clearCookie("token");
     res.status(200).send("Success");
